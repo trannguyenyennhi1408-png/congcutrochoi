@@ -1424,12 +1424,13 @@ export default function App() {
            if (loginRole === 'student' && finalClassCode) {
               const targetClass = updatedClassrooms.find(c => c.code === finalClassCode);
               if (targetClass) {
-                  const studentExists = targetClass.students.some(s => s.name === newUser.name);
+                  const classStudents = targetClass.students || [];
+                  const studentExists = classStudents.some(s => s.name === newUser.name);
                   if (!studentExists) {
                       const newStudent = { id: newUser.id, name: newUser.name, joinedAt: new Date().toISOString() };
                       updatedClassrooms = updatedClassrooms.map(c => 
                           c.code === targetClass.code 
-                          ? { ...c, students: [...c.students, newStudent] }
+                          ? { ...c, students: [...classStudents, newStudent] }
                           : c
                       );
                   }
@@ -1538,7 +1539,11 @@ export default function App() {
             </div>
 
             <button
-              onClick={handleLogin}
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogin();
+              }}
+              type="button"
               className="w-full py-4 gradient-bg text-white rounded-2xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2 text-lg"
             >
               {isLoginMode ? 'Đăng nhập vào App' : 'Đăng ký Tài khoản'} <ChevronRight size={20} />
