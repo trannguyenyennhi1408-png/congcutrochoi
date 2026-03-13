@@ -52,6 +52,7 @@ export const INITIAL_QUESTIONS: Question[] = [
 
 export const INITIAL_APP_DATA: AppData = {
   currentUser: null,
+  users: [],
   classrooms: [],
   subjects: INITIAL_SUBJECTS,
   questions: INITIAL_QUESTIONS,
