@@ -1355,6 +1355,7 @@ export default function App() {
   );
 
   const renderLogin = () => {
+    const [isLoginMode, setIsLoginMode] = useState(true);
     const [loginName, setLoginName] = useState('');
     const [loginRole, setLoginRole] = useState<UserRole>('student');
     const [loginClassCode, setLoginClassCode] = useState('');
@@ -1365,63 +1366,83 @@ export default function App() {
         return;
       }
       
-      let finalClassCode = '';
-      if (loginRole === 'student') {
-        if (!loginClassCode.trim()) {
-          alert('Học sinh vui lòng nhập mã Lớp học (Tham gia)!');
-          return;
+      const users = appData.users || [];
+      const existingUser = users.find(u => u.name === loginName.trim() && u.role === loginRole);
+
+      if (isLoginMode) {
+        if (!existingUser) {
+           alert('Tài khoản không tồn tại. Vui lòng kiểm tra lại họ tên hoặc đăng ký tài khoản mới!');
+           return;
         }
+
+        if (loginRole === 'student') {
+          if (!loginClassCode.trim()) {
+            alert('Học sinh vui lòng nhập mã Lớp học để đăng nhập!');
+            return;
+          }
+          const targetClass = appData.classrooms?.find(c => c.code === loginClassCode.trim().toUpperCase());
+          if (!targetClass) {
+            alert('Không tìm thấy Lớp học với mã này!');
+            return;
+          }
+        }
+
+        setAppData(prev => ({ ...prev, currentUser: existingUser }));
+      } else {
+        // Register Mode
+        if (existingUser) {
+           alert('Tên tài khoản này đã tồn tại. Vui lòng chọn tên khác hoặc chuyển sang Đăng nhập!');
+           return;
+        }
+
+        let finalClassCode = '';
+        if (loginRole === 'student') {
+          if (!loginClassCode.trim()) {
+            alert('Học sinh vui lòng nhập mã Lớp học (Được GV cung cấp) để tham gia!');
+            return;
+          }
+          
+          const targetClass = appData.classrooms?.find(c => c.code === loginClassCode.trim().toUpperCase());
+          if (!targetClass) {
+            alert('Không tìm thấy Lớp học với mã này!');
+            return;
+          }
+          finalClassCode = targetClass.code;
+        }
+
+        const newUser: User = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: loginName.trim(),
+          role: loginRole,
+          classCode: finalClassCode || undefined
+        };
         
-        const targetClass = appData.classrooms?.find(c => c.code === loginClassCode.trim().toUpperCase());
-        if (!targetClass) {
-          alert('Không tìm thấy Lớp học với mã này!');
-          return;
-        }
-        finalClassCode = targetClass.code;
+        setAppData(prev => {
+           let updatedClassrooms = prev.classrooms || [];
+           let updatedUsers = [...(prev.users || []), newUser];
 
-        // Add student to the class list if not already there (name base logic for demo)
-        const studentExists = targetClass.students.some(s => s.name === loginName);
-        if (!studentExists) {
-          const newStudent = { id: Math.random().toString(36).substr(2, 9), name: loginName, joinedAt: new Date().toISOString() };
-          const updatedClassrooms = appData.classrooms.map(c => 
-            c.code === targetClass.code 
-            ? { ...c, students: [...c.students, newStudent] }
-            : c
-          );
-          setAppData(prev => ({ ...prev, classrooms: updatedClassrooms }));
-        }
+           if (loginRole === 'student' && finalClassCode) {
+              const targetClass = updatedClassrooms.find(c => c.code === finalClassCode);
+              if (targetClass) {
+                  const studentExists = targetClass.students.some(s => s.name === newUser.name);
+                  if (!studentExists) {
+                      const newStudent = { id: newUser.id, name: newUser.name, joinedAt: new Date().toISOString() };
+                      updatedClassrooms = updatedClassrooms.map(c => 
+                          c.code === targetClass.code 
+                          ? { ...c, students: [...c.students, newStudent] }
+                          : c
+                      );
+                  }
+              }
+           }
+           return {
+             ...prev,
+             users: updatedUsers,
+             classrooms: updatedClassrooms,
+             currentUser: newUser
+           };
+        });
       }
-
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: loginName,
-        role: loginRole,
-        classCode: finalClassCode || undefined
-      };
-      
-      // We must explicitly use setTimeout or update after checking because setAppData is async, but we already updated classrooms above for students, so we combine the state updates here
-      setAppData(prev => {
-         let updatedClassrooms = prev.classrooms || [];
-         if (loginRole === 'student') {
-            const targetClass = updatedClassrooms.find(c => c.code === loginClassCode.trim().toUpperCase());
-            if (targetClass) {
-                const studentExists = targetClass.students.some(s => s.name === loginName);
-                if (!studentExists) {
-                    const newStudent = { id: newUser.id, name: loginName, joinedAt: new Date().toISOString() };
-                    updatedClassrooms = updatedClassrooms.map(c => 
-                        c.code === targetClass.code 
-                        ? { ...c, students: [...c.students, newStudent] }
-                        : c
-                    );
-                }
-            }
-         }
-         return {
-           ...prev,
-           classrooms: updatedClassrooms,
-           currentUser: newUser
-         };
-      });
     };
 
     return (
@@ -1439,6 +1460,22 @@ export default function App() {
           </div>
 
           <div className="relative z-10 space-y-6">
+            
+            <div className="flex bg-gray-100 p-1 rounded-xl">
+              <button 
+                onClick={() => setIsLoginMode(true)}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isLoginMode ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Đăng nhập
+              </button>
+              <button 
+                onClick={() => setIsLoginMode(false)}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${!isLoginMode ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Tạo tài khoản
+              </button>
+            </div>
+
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-700">Bạn là ai?</label>
               <div className="grid grid-cols-2 gap-3">
@@ -1473,13 +1510,13 @@ export default function App() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700">Tên của bạn</label>
+                <label className="text-sm font-bold text-gray-700">Tên tài khoản</label>
                 <input
                   type="text"
                   value={loginName}
                   onChange={(e) => setLoginName(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                  placeholder="Ví dụ: Nguyễn Văn A..."
+                  placeholder={loginRole === 'teacher' ? "Ví dụ: Cô Lan Toán..." : "Ví dụ: Nguyễn Văn A..."}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all font-medium text-gray-800"
                 />
               </div>
@@ -1495,7 +1532,7 @@ export default function App() {
                     placeholder="Nhập mã lớp do giáo viên cung cấp..."
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all font-medium text-gray-800 uppercase"
                   />
-                  <p className="text-xs text-gray-400">Yêu cầu phải có mã lớp đễ bắt đầu học.</p>
+                  <p className="text-xs text-gray-400">Yêu cầu phải có mã lớp {isLoginMode ? 'để vào học.' : 'để đăng ký mới.'}</p>
                 </div>
               )}
             </div>
@@ -1504,7 +1541,7 @@ export default function App() {
               onClick={handleLogin}
               className="w-full py-4 gradient-bg text-white rounded-2xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center justify-center gap-2 text-lg"
             >
-              Vào ứng dụng <ChevronRight size={20} />
+              {isLoginMode ? 'Đăng nhập vào App' : 'Đăng ký Tài khoản'} <ChevronRight size={20} />
             </button>
           </div>
         </div>
