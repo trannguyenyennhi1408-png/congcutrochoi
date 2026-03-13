@@ -36,6 +36,30 @@ export interface Progress {
   weakTopics: string[];
 }
 
+export type UserRole = 'student' | 'teacher';
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  avatar?: string;
+  classCode?: string; // Students belong to a class
+}
+
+export interface StudentRecord {
+  id: string;
+  name: string;
+  joinedAt: string;
+}
+
+export interface Classroom {
+  id: string;
+  name: string;
+  code: string;
+  teacherId: string;
+  students: StudentRecord[];
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark';
   soundEnabled: boolean;
@@ -45,6 +69,8 @@ export interface AppSettings {
 }
 
 export interface AppData {
+  currentUser: User | null;
+  classrooms: Classroom[];
   subjects: Subject[];
   questions: Question[];
   sessions: Session[];
