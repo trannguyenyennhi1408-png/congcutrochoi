@@ -1388,6 +1388,7 @@ export default function App() {
         }
 
         setAppData(prev => ({ ...prev, currentUser: existingUser }));
+        if (existingUser.role === 'teacher') setActiveTab('classes');
       } else {
         // Register Mode
         if (existingUser) {
@@ -1443,6 +1444,7 @@ export default function App() {
              currentUser: newUser
            };
         });
+        if (loginRole === 'teacher') setActiveTab('classes');
       }
     };
 
@@ -1723,7 +1725,7 @@ export default function App() {
                 <SidebarItem 
                   icon={Settings} 
                   label="Quản lý" 
-                  active={activeTab === 'manage'} 
+                  active={activeTab === 'manage' || activeTab === 'subjects'} 
                   onClick={() => { setActiveTab('subjects'); setSidebarOpen(false); }} 
                 />
                 <SidebarItem 
