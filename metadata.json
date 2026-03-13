@@ -1,0 +1,7 @@
+{
+  "name": "EduGame - Nền tảng Học tập Trò chơi hóa",
+  "description": "Hệ thống quản lý học tập tương tác với kịch bản trò chơi, tích hợp Gemini AI giúp giáo viên tạo bài giảng sinh động và học sinh hứng thú hơn.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
