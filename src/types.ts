@@ -70,6 +70,7 @@ export interface AppSettings {
 
 export interface AppData {
   currentUser: User | null;
+  users: User[]; // Store registered accounts for persistence
   classrooms: Classroom[];
   subjects: Subject[];
   questions: Question[];
